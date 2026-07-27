@@ -109,7 +109,7 @@ function eer_render_admin_page() {
 	}
 
 	$routes = eer_get_routes();
-	$routes[] = array(
+	$blank_route = array(
 		'id'            => '',
 		'enabled'       => false,
 		'label'         => '',
@@ -127,8 +127,13 @@ function eer_render_admin_page() {
 	$template_files = eer_get_template_files();
 	?>
 	<div class="wrap eer-wrap">
-		<h1>Elementor Email Router</h1>
-		<p>Route Elementor Pro form emails based on a submitted field value. The first matching enabled route wins.</p>
+		<div class="eer-page-head">
+			<div>
+				<h1>Elementor Email Router</h1>
+				<p>Route Elementor Pro form emails based on a submitted field value. The first matching enabled route wins.</p>
+			</div>
+			<button type="button" class="button button-primary eer-add-route">Add route</button>
+		</div>
 
 		<?php if ( isset( $_GET['updated'] ) ) : ?>
 			<div class="notice notice-success is-dismissible"><p>Email routes saved.</p></div>
@@ -138,106 +143,100 @@ function eer_render_admin_page() {
 			<input type="hidden" name="action" value="eer_save_routes">
 			<?php wp_nonce_field( 'eer_save_routes' ); ?>
 
-			<?php foreach ( $routes as $index => $route ) : ?>
-				<div class="eer-route-card">
-					<div class="eer-route-head">
-						<h2><?php echo $route['label'] ? esc_html( $route['label'] ) : 'New route'; ?></h2>
-						<label>
-							<input type="checkbox" name="routes[<?php echo esc_attr( $index ); ?>][enabled]" value="1" <?php checked( $route['enabled'] ); ?>>
-							Enabled
-						</label>
-					</div>
+			<div class="eer-route-list">
+				<?php foreach ( $routes as $index => $route ) : ?>
+					<?php eer_render_route_card( $route, (string) $index, $template_files, 0 === $index ); ?>
+				<?php endforeach; ?>
+			</div>
 
-					<input type="hidden" name="routes[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $route['id'] ); ?>">
-
-					<div class="eer-grid">
-						<label>
-							Route label
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][label]" value="<?php echo esc_attr( $route['label'] ); ?>" placeholder="KidsBoost - Branded School Gift">
-						</label>
-
-						<label>
-							Elementor form name
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][form_name]" value="<?php echo esc_attr( $route['form_name'] ); ?>" placeholder="Sterling Kids & Teens Saving Boost">
-						</label>
-
-						<label>
-							Field ID to check
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][field_id]" value="<?php echo esc_attr( $route['field_id'] ); ?>" placeholder="field_bef6e91">
-						</label>
-
-						<label>
-							Match type
-							<select name="routes[<?php echo esc_attr( $index ); ?>][match_type]">
-								<option value="exact" <?php selected( $route['match_type'], 'exact' ); ?>>Exact match</option>
-								<option value="contains" <?php selected( $route['match_type'], 'contains' ); ?>>Contains</option>
-							</select>
-						</label>
-
-						<label>
-							Field value to match
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][match_value]" value="<?php echo esc_attr( $route['match_value'] ); ?>" placeholder="Branded School Gift">
-						</label>
-
-						<label>
-							Email action to update
-							<select name="routes[<?php echo esc_attr( $index ); ?>][email_action]">
-								<option value="email" <?php selected( $route['email_action'], 'email' ); ?>>Email</option>
-								<option value="email_2" <?php selected( $route['email_action'], 'email_2' ); ?>>Email 2</option>
-							</select>
-						</label>
-
-						<label>
-							Recipient
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][email_to]" value="<?php echo esc_attr( $route['email_to'] ); ?>" placeholder='[field id="email"]'>
-						</label>
-
-						<label>
-							Subject
-							<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][email_subject]" value="<?php echo esc_attr( $route['email_subject'] ); ?>">
-						</label>
-
-						<label>
-							Template file
-							<select name="routes[<?php echo esc_attr( $index ); ?>][template_file]">
-								<option value="">Use custom HTML below</option>
-								<?php foreach ( $template_files as $file ) : ?>
-									<option value="<?php echo esc_attr( $file ); ?>" <?php selected( $route['template_file'], $file ); ?>><?php echo esc_html( $file ); ?></option>
-								<?php endforeach; ?>
-							</select>
-						</label>
-					</div>
-
-					<label class="eer-template">
-						Custom HTML template
-						<textarea name="routes[<?php echo esc_attr( $index ); ?>][email_content]" rows="10" placeholder="Paste an HTML email template here. Leave empty when using a template file."><?php echo esc_textarea( $route['email_content'] ); ?></textarea>
-					</label>
-				</div>
-			<?php endforeach; ?>
+			<template id="eer-route-template">
+				<?php eer_render_route_card( $blank_route, '__INDEX__', $template_files, true ); ?>
+			</template>
 
 			<?php submit_button( 'Save Email Routes' ); ?>
 		</form>
 	</div>
 
 	<style>
-		.eer-wrap .eer-route-card {
-			background: #fff;
-			border: 1px solid #dcdcde;
-			border-radius: 8px;
-			margin: 20px 0;
-			padding: 20px;
-		}
-
-		.eer-route-head {
-			align-items: center;
+		.eer-page-head {
+			align-items: flex-start;
 			display: flex;
-			justify-content: space-between;
 			gap: 16px;
+			justify-content: space-between;
 			margin-bottom: 16px;
 		}
 
-		.eer-route-head h2 {
-			margin: 0;
+		.eer-page-head h1 {
+			margin-bottom: 4px;
+		}
+
+		.eer-route-card {
+			background: #fff;
+			border: 1px solid #dcdcde;
+			border-radius: 8px;
+			margin: 12px 0;
+			overflow: hidden;
+		}
+
+		.eer-route-card[open] {
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+		}
+
+		.eer-route-summary {
+			align-items: center;
+			cursor: pointer;
+			display: grid;
+			gap: 12px;
+			grid-template-columns: minmax(220px, 1.2fr) repeat(4, minmax(120px, 1fr)) auto;
+			padding: 14px 16px;
+		}
+
+		.eer-route-summary::-webkit-details-marker {
+			display: none;
+		}
+
+		.eer-route-title {
+			font-size: 15px;
+			font-weight: 700;
+		}
+
+		.eer-route-meta {
+			color: #646970;
+			font-size: 12px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.eer-pill {
+			background: #f0f0f1;
+			border-radius: 999px;
+			display: inline-block;
+			font-size: 12px;
+			line-height: 1.4;
+			padding: 4px 9px;
+			white-space: nowrap;
+		}
+
+		.eer-pill.is-enabled {
+			background: #e8f5e9;
+			color: #0a6b20;
+		}
+
+		.eer-pill.is-disabled {
+			background: #f6f7f7;
+			color: #646970;
+		}
+
+		.eer-route-actions {
+			display: flex;
+			gap: 8px;
+			justify-content: flex-end;
+		}
+
+		.eer-route-body {
+			border-top: 1px solid #dcdcde;
+			padding: 18px;
 		}
 
 		.eer-grid {
@@ -260,8 +259,23 @@ function eer_render_admin_page() {
 			width: 100%;
 		}
 
+		.eer-grid .eer-checkbox-field input {
+			width: auto;
+		}
+
 		.eer-template {
 			margin-top: 16px;
+		}
+
+		@media (max-width: 1280px) {
+			.eer-route-summary {
+				grid-template-columns: 1fr 1fr 1fr auto;
+			}
+
+			.eer-route-meta:nth-of-type(4),
+			.eer-route-meta:nth-of-type(5) {
+				display: none;
+			}
 		}
 
 		@media (max-width: 1100px) {
@@ -271,11 +285,208 @@ function eer_render_admin_page() {
 		}
 
 		@media (max-width: 782px) {
+			.eer-page-head,
+			.eer-route-summary {
+				display: block;
+			}
+
+			.eer-page-head .button,
+			.eer-route-actions {
+				margin-top: 10px;
+			}
+
+			.eer-route-meta {
+				margin-top: 6px;
+			}
+
 			.eer-grid {
 				grid-template-columns: 1fr;
 			}
 		}
 	</style>
+
+	<script>
+		(function () {
+			const list = document.querySelector('.eer-route-list');
+			const template = document.getElementById('eer-route-template');
+			const addButton = document.querySelector('.eer-add-route');
+
+			if (!list || !template || !addButton) return;
+
+			let nextIndex = list.querySelectorAll('.eer-route-card').length;
+
+			function stopSummaryToggle(event) {
+				if (event.target.closest('button, input, select, textarea, label')) {
+					event.stopPropagation();
+				}
+			}
+
+			function refreshSummary(card) {
+				const label = card.querySelector('[data-eer-field="label"]')?.value || 'New route';
+				const formName = card.querySelector('[data-eer-field="form_name"]')?.value || 'No form selected';
+				const matchValue = card.querySelector('[data-eer-field="match_value"]')?.value || 'No match value';
+				const emailAction = card.querySelector('[data-eer-field="email_action"]')?.value === 'email' ? 'Email' : 'Email 2';
+				const templateFile = card.querySelector('[data-eer-field="template_file"]')?.value || 'Custom HTML';
+				const enabled = card.querySelector('[data-eer-field="enabled"]')?.checked;
+
+				card.querySelector('[data-eer-summary="label"]').textContent = label;
+				card.querySelector('[data-eer-summary="form"]').textContent = formName;
+				card.querySelector('[data-eer-summary="match"]').textContent = matchValue;
+				card.querySelector('[data-eer-summary="email"]').textContent = emailAction;
+				card.querySelector('[data-eer-summary="template"]').textContent = templateFile;
+
+				const status = card.querySelector('[data-eer-summary="status"]');
+				status.textContent = enabled ? 'Enabled' : 'Disabled';
+				status.classList.toggle('is-enabled', enabled);
+				status.classList.toggle('is-disabled', !enabled);
+			}
+
+			function bindCard(card) {
+				card.addEventListener('click', stopSummaryToggle);
+
+				card.querySelectorAll('input, select, textarea').forEach(function (field) {
+					field.addEventListener('input', function () {
+						refreshSummary(card);
+					});
+					field.addEventListener('change', function () {
+						refreshSummary(card);
+					});
+				});
+
+				card.querySelector('.eer-duplicate-route')?.addEventListener('click', function () {
+					const clone = card.cloneNode(true);
+					const index = nextIndex++;
+
+					clone.open = true;
+					clone.querySelector('[data-eer-field="id"]').value = '';
+
+					clone.querySelectorAll('[name]').forEach(function (field) {
+						field.name = field.name.replace(/routes\[[^\]]+\]/, 'routes[' + index + ']');
+					});
+
+					card.after(clone);
+					bindCard(clone);
+					refreshSummary(clone);
+				});
+
+				card.querySelector('.eer-remove-route')?.addEventListener('click', function () {
+					card.remove();
+				});
+
+				refreshSummary(card);
+			}
+
+			addButton.addEventListener('click', function () {
+				const html = template.innerHTML.replaceAll('__INDEX__', String(nextIndex++));
+				const wrapper = document.createElement('div');
+				wrapper.innerHTML = html.trim();
+
+				const card = wrapper.firstElementChild;
+				card.open = true;
+				list.appendChild(card);
+				bindCard(card);
+				card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			});
+
+			list.querySelectorAll('.eer-route-card').forEach(bindCard);
+		})();
+	</script>
+	<?php
+}
+
+function eer_render_route_card( $route, $index, $template_files, $open = false ) {
+	?>
+	<details class="eer-route-card" <?php echo $open ? 'open' : ''; ?>>
+		<summary class="eer-route-summary">
+			<span>
+				<span class="eer-route-title" data-eer-summary="label"><?php echo esc_html( $route['label'] ?: 'New route' ); ?></span>
+			</span>
+			<span class="eer-route-meta" data-eer-summary="form"><?php echo esc_html( $route['form_name'] ?: 'No form selected' ); ?></span>
+			<span class="eer-route-meta">When value is <strong data-eer-summary="match"><?php echo esc_html( $route['match_value'] ?: 'No match value' ); ?></strong></span>
+			<span class="eer-route-meta" data-eer-summary="email"><?php echo 'email' === $route['email_action'] ? 'Email' : 'Email 2'; ?></span>
+			<span class="eer-route-meta" data-eer-summary="template"><?php echo esc_html( $route['template_file'] ?: 'Custom HTML' ); ?></span>
+			<span class="eer-route-actions">
+				<span class="eer-pill <?php echo $route['enabled'] ? 'is-enabled' : 'is-disabled'; ?>" data-eer-summary="status"><?php echo $route['enabled'] ? 'Enabled' : 'Disabled'; ?></span>
+				<button type="button" class="button eer-duplicate-route">Duplicate</button>
+				<button type="button" class="button eer-remove-route">Remove</button>
+			</span>
+		</summary>
+
+		<div class="eer-route-body">
+			<input type="hidden" data-eer-field="id" name="routes[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $route['id'] ); ?>">
+
+			<div class="eer-grid">
+				<label class="eer-checkbox-field">
+					Status
+					<span>
+						<input type="checkbox" data-eer-field="enabled" name="routes[<?php echo esc_attr( $index ); ?>][enabled]" value="1" <?php checked( $route['enabled'] ); ?>>
+						Enabled
+					</span>
+				</label>
+
+				<label>
+					Route label
+					<input type="text" data-eer-field="label" name="routes[<?php echo esc_attr( $index ); ?>][label]" value="<?php echo esc_attr( $route['label'] ); ?>" placeholder="KidsBoost - Branded School Gift">
+				</label>
+
+				<label>
+					Elementor form name
+					<input type="text" data-eer-field="form_name" name="routes[<?php echo esc_attr( $index ); ?>][form_name]" value="<?php echo esc_attr( $route['form_name'] ); ?>" placeholder="Sterling Kids & Teens Saving Boost">
+				</label>
+
+				<label>
+					Field ID to check
+					<input type="text" data-eer-field="field_id" name="routes[<?php echo esc_attr( $index ); ?>][field_id]" value="<?php echo esc_attr( $route['field_id'] ); ?>" placeholder="field_bef6e91">
+				</label>
+
+				<label>
+					Match type
+					<select name="routes[<?php echo esc_attr( $index ); ?>][match_type]">
+						<option value="exact" <?php selected( $route['match_type'], 'exact' ); ?>>Exact match</option>
+						<option value="contains" <?php selected( $route['match_type'], 'contains' ); ?>>Contains</option>
+					</select>
+				</label>
+
+				<label>
+					Field value to match
+					<input type="text" data-eer-field="match_value" name="routes[<?php echo esc_attr( $index ); ?>][match_value]" value="<?php echo esc_attr( $route['match_value'] ); ?>" placeholder="Branded School Gift">
+				</label>
+
+				<label>
+					Email action to update
+					<select data-eer-field="email_action" name="routes[<?php echo esc_attr( $index ); ?>][email_action]">
+						<option value="email" <?php selected( $route['email_action'], 'email' ); ?>>Email</option>
+						<option value="email_2" <?php selected( $route['email_action'], 'email_2' ); ?>>Email 2</option>
+					</select>
+				</label>
+
+				<label>
+					Recipient
+					<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][email_to]" value="<?php echo esc_attr( $route['email_to'] ); ?>" placeholder='[field id="email"]'>
+				</label>
+
+				<label>
+					Subject
+					<input type="text" name="routes[<?php echo esc_attr( $index ); ?>][email_subject]" value="<?php echo esc_attr( $route['email_subject'] ); ?>">
+				</label>
+
+				<label>
+					Template file
+					<select data-eer-field="template_file" name="routes[<?php echo esc_attr( $index ); ?>][template_file]">
+						<option value="">Use custom HTML below</option>
+						<?php foreach ( $template_files as $file ) : ?>
+							<option value="<?php echo esc_attr( $file ); ?>" <?php selected( $route['template_file'], $file ); ?>><?php echo esc_html( $file ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			</div>
+
+			<label class="eer-template">
+				Custom HTML template
+				<textarea name="routes[<?php echo esc_attr( $index ); ?>][email_content]" rows="10" placeholder="Paste an HTML email template here. Leave empty when using a template file."><?php echo esc_textarea( $route['email_content'] ); ?></textarea>
+			</label>
+		</div>
+	</details>
 	<?php
 }
 
