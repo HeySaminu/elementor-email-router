@@ -300,9 +300,17 @@ final class EER_Native_Router {
 	public static function route_form_emails( $record, $ajax_handler ) {
 		unset( $ajax_handler );
 
+		if ( ! is_object( $record ) || ! method_exists( $record, 'get' ) || ! method_exists( $record, 'set' ) ) {
+			return $record;
+		}
+
 		$settings = $record->get( 'form_settings' );
 		$fields   = $record->get( 'fields' );
 		$skipped  = array();
+
+		if ( ! is_array( $settings ) || ! is_array( $fields ) ) {
+			return $record;
+		}
 
 		foreach ( self::email_actions() as $action ) {
 			if ( ! self::is_enabled_for_action( $settings, $action['name'] ) ) {
@@ -328,7 +336,7 @@ final class EER_Native_Router {
 						continue;
 					}
 
-					$settings = self::apply_route( $settings, $route, $action['suffix'] );
+					$settings = self::apply_route( $settings, $route, $action['suffix'], $record );
 					$matched  = true;
 					break;
 				}
@@ -361,7 +369,16 @@ final class EER_Native_Router {
 	public static function filter_submit_actions( $actions, $record, $ajax_handler ) {
 		unset( $ajax_handler );
 
+		if ( ! is_array( $actions ) || ! is_object( $record ) || ! method_exists( $record, 'get' ) ) {
+			return $actions;
+		}
+
 		$settings = $record->get( 'form_settings' );
+
+		if ( ! is_array( $settings ) ) {
+			return $actions;
+		}
+
 		$skipped  = isset( $settings[ self::SKIP_SETTING ] ) && is_array( $settings[ self::SKIP_SETTING ] )
 			? $settings[ self::SKIP_SETTING ]
 			: array();
@@ -381,6 +398,10 @@ final class EER_Native_Router {
 	 * @return bool
 	 */
 	public static function is_enabled_for_action( $settings, $action ) {
+		if ( ! is_array( $settings ) || ! is_string( $action ) ) {
+			return false;
+		}
+
 		$suffix = in_array( $action, array( 'email2', 'email_2' ), true ) ? '_2' : '';
 
 		return 'yes' === ( $settings[ self::ENABLE_CONTROL . $suffix ] ?? '' );
@@ -394,6 +415,10 @@ final class EER_Native_Router {
 	 * @return bool
 	 */
 	public static function route_matches( $fields, $route ) {
+		if ( ! is_array( $fields ) || ! is_array( $route ) ) {
+			return false;
+		}
+
 		$field_id = self::normalize_field_id( $route['field_id'] ?? '' );
 
 		if ( '' === $field_id ) {
@@ -402,7 +427,8 @@ final class EER_Native_Router {
 
 		$actual   = self::field_value( $fields, $field_id );
 		$expected = trim( (string) ( $route['match_value'] ?? '' ) );
-		$operator = $route['operator'] ?? 'equals';
+		$operators = array( 'equals', 'not_equals', 'contains', 'not_contains', 'starts_with', 'ends_with', 'empty', 'not_empty' );
+		$operator  = isset( $route['operator'] ) && in_array( $route['operator'], $operators, true ) ? $route['operator'] : 'equals';
 
 		if ( 'empty' === $operator ) {
 			return '' === $actual;
@@ -423,7 +449,7 @@ final class EER_Native_Router {
 			case 'contains':
 				return '' !== $expected && false !== strpos( $actual, $expected );
 			case 'not_contains':
-				return '' === $expected || false === strpos( $actual, $expected );
+				return '' !== $expected && false === strpos( $actual, $expected );
 			case 'starts_with':
 				return '' !== $expected && 0 === strpos( $actual, $expected );
 			case 'ends_with':
@@ -440,9 +466,14 @@ final class EER_Native_Router {
 	 * @param array  $settings Form settings.
 	 * @param array  $route Matched route.
 	 * @param string $suffix Email 2 suffix.
+	 * @param object $record Elementor form record.
 	 * @return array
 	 */
-	public static function apply_route( $settings, $route, $suffix = '' ) {
+	public static function apply_route( $settings, $route, $suffix = '', $record = null ) {
+		if ( ! is_array( $settings ) || ! is_array( $route ) ) {
+			return is_array( $settings ) ? $settings : array();
+		}
+
 		$setting_keys = array(
 			'email_to',
 			'email_subject',
@@ -455,8 +486,20 @@ final class EER_Native_Router {
 		);
 
 		foreach ( $setting_keys as $key ) {
-			if ( isset( $route[ $key ] ) && '' !== trim( (string) $route[ $key ] ) ) {
-				$settings[ $key . $suffix ] = $route[ $key ];
+			if ( ! isset( $route[ $key ] ) || ! is_scalar( $route[ $key ] ) ) {
+				continue;
+			}
+
+			$value = trim( (string) $route[ $key ] );
+
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$value = self::prepare_email_setting( $key, $value, $suffix, $record );
+
+			if ( null !== $value && '' !== $value ) {
+				$settings[ $key . $suffix ] = $value;
 			}
 		}
 
@@ -465,6 +508,115 @@ final class EER_Native_Router {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * Resolve shortcodes and sanitize values used in email headers.
+	 *
+	 * @param string $key Email setting key.
+	 * @param string $value Configured value.
+	 * @param string $suffix Email 2 suffix.
+	 * @param object $record Elementor form record.
+	 * @return string|null
+	 */
+	private static function prepare_email_setting( $key, $value, $suffix, $record ) {
+		if ( 'email_content' === $key ) {
+			return $value;
+		}
+
+		if ( 'email_reply_to' === $key && '' === $suffix ) {
+			$field_id = self::normalize_field_id( $value );
+			$fields   = is_object( $record ) && method_exists( $record, 'get' ) ? $record->get( 'fields' ) : array();
+
+			return $field_id && is_array( $fields ) && isset( $fields[ $field_id ] ) ? $field_id : null;
+		}
+
+		if ( is_object( $record ) && method_exists( $record, 'replace_setting_shortcodes' ) ) {
+			$value = $record->replace_setting_shortcodes( $value );
+		}
+
+		switch ( $key ) {
+			case 'email_subject':
+			case 'email_from_name':
+				return self::sanitize_header_text( $value );
+			case 'email_from':
+			case 'email_reply_to':
+				return self::sanitize_single_address( $value );
+			case 'email_to':
+			case 'email_to_cc':
+			case 'email_to_bcc':
+				return self::sanitize_address_list( $value );
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Remove line breaks, tags, and control characters from a mail header value.
+	 *
+	 * @param string $value Header value.
+	 * @return string
+	 */
+	private static function sanitize_header_text( $value ) {
+		$value = wp_strip_all_tags( (string) $value, true );
+		$value = preg_replace( '/[\r\n\t]+/', ' ', $value );
+		$value = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value );
+
+		return trim( (string) $value );
+	}
+
+	/**
+	 * Validate a single email address.
+	 *
+	 * @param string $value Address value.
+	 * @return string|null
+	 */
+	private static function sanitize_single_address( $value ) {
+		$value = self::sanitize_header_text( $value );
+
+		if ( preg_match( '/<([^<>]+)>/', $value, $matches ) ) {
+			$value = $matches[1];
+		}
+
+		$value = trim( $value );
+
+		return is_email( $value ) ? sanitize_email( $value ) : null;
+	}
+
+	/**
+	 * Validate a comma-separated email address list while preserving safe names.
+	 *
+	 * @param string $value Address list.
+	 * @return string|null
+	 */
+	private static function sanitize_address_list( $value ) {
+		$value     = self::sanitize_header_text( $value );
+		$addresses = array();
+
+		foreach ( explode( ',', $value ) as $address ) {
+			$address = trim( $address );
+
+			if ( '' === $address ) {
+				continue;
+			}
+
+			$name = '';
+
+			if ( preg_match( '/^([^<>]*)<([^<>]+)>$/', $address, $matches ) ) {
+				$name    = self::sanitize_header_text( $matches[1] );
+				$address = trim( $matches[2] );
+			}
+
+			if ( ! is_email( $address ) ) {
+				continue;
+			}
+
+			$email = sanitize_email( $address );
+
+			$addresses[] = '' !== $name ? $name . ' <' . $email . '>' : $email;
+		}
+
+		return $addresses ? implode( ', ', $addresses ) : null;
 	}
 
 	/**
@@ -492,6 +644,10 @@ final class EER_Native_Router {
 	 * @return string
 	 */
 	private static function normalize_field_id( $field_id ) {
+		if ( ! is_scalar( $field_id ) ) {
+			return '';
+		}
+
 		$field_id = trim( (string) $field_id );
 
 		if ( preg_match( '/form_fields\\[([^\\]]+)\\]/', $field_id, $matches ) ) {
@@ -502,7 +658,9 @@ final class EER_Native_Router {
 			$field_id = substr( $field_id, strlen( 'form-field-' ) );
 		}
 
-		return trim( $field_id );
+		$field_id = trim( $field_id );
+
+		return strlen( $field_id ) <= 128 && preg_match( '/^[A-Za-z0-9_-]+$/', $field_id ) ? $field_id : '';
 	}
 
 	/**
@@ -513,13 +671,17 @@ final class EER_Native_Router {
 	 * @return string
 	 */
 	private static function field_value( $fields, $field_id ) {
+		if ( ! is_array( $fields ) || ! isset( $fields[ $field_id ] ) || ! is_array( $fields[ $field_id ] ) ) {
+			return '';
+		}
+
 		$value = $fields[ $field_id ]['value'] ?? '';
 
 		if ( is_array( $value ) ) {
 			$value = implode( ', ', array_map( 'strval', $value ) );
 		}
 
-		return trim( (string) $value );
+		return is_scalar( $value ) ? trim( (string) $value ) : '';
 	}
 
 	/**

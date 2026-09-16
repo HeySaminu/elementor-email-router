@@ -43,3 +43,7 @@ Available operators:
 - Is not empty
 
 Matching is case-insensitive by default. It can be made case-sensitive per variant.
+
+## Security
+
+The plugin does not expose its own public endpoint or read submitted request variables directly. Elementor continues to handle form authorization, validation, shortcode replacement, and email delivery. Routed header values are validated, line breaks and control characters are removed, and malformed route settings are ignored.

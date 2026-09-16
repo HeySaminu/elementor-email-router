@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Elementor Email Router
  * Description: Adds conditional routing directly to Elementor Pro Form Email and Email 2 actions.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author: Saminu
  * Text Domain: elementor-email-router
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const EER_VERSION = '2.1.0';
+const EER_VERSION = '2.1.1';
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-eer-native-router.php';
 
