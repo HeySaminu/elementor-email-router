@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a reproducible problem with conditional email routing.
+title: "Bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not include passwords, form submissions, customer data or vulnerability details.
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: 2.2.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include WordPress, PHP, Elementor and Elementor Pro versions.
+      placeholder: WordPress 7.1, PHP 8.3, Elementor 4.2, Elementor Pro 4.2
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: Explain what happened and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Create a Form widget...
+        2. Enable routing...
+        3. Submit the form...
+    validations:
+      required: true
+  - type: textarea
+    id: route
+    attributes:
+      label: Route configuration
+      description: Remove all personal data and secrets before sharing settings.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste only sanitized logs. This field supports code formatting.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I reproduced the problem with other non-essential plugins disabled.
+          required: true
+        - label: I removed personal data, credentials and email content from this report.
+          required: true
+        - label: This report does not disclose a security vulnerability.
+          required: true
