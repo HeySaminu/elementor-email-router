@@ -9,12 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-final class EER_Native_Router {
-	const ENABLE_CONTROL   = 'eer_conditional_routing';
-	const ROUTES_CONTROL   = 'eer_conditional_routes';
-	const NO_MATCH_CONTROL = 'eer_no_match';
-	const SKIP_SETTING     = '_eer_skip_actions';
-	const DEFAULT_FROM     = 'web@sterling.ng';
+final class CEER_Native_Router {
+	const ENABLE_CONTROL   = 'ceer_conditional_routing';
+	const ROUTES_CONTROL   = 'ceer_conditional_routes';
+	const NO_MATCH_CONTROL = 'ceer_no_match';
+	const SKIP_SETTING     = '_ceer_skip_actions';
 
 	/**
 	 * Register Elementor editor and form submission hooks.
@@ -58,20 +57,12 @@ final class EER_Native_Router {
 		$enable_id   = self::ENABLE_CONTROL . $suffix;
 		$routes_id   = self::ROUTES_CONTROL . $suffix;
 		$no_match_id = self::NO_MATCH_CONTROL . $suffix;
-		$email_label = '_2' === $suffix ? __( 'Email 2', 'elementor-email-router' ) : __( 'Email', 'elementor-email-router' );
-
-		$widget->update_control(
-			'email_from' . $suffix,
-			array(
-				'default'     => self::DEFAULT_FROM,
-				'placeholder' => self::DEFAULT_FROM,
-			)
-		);
+		$email_label = '_2' === $suffix ? __( 'Email 2', 'conditional-email-router-for-elementor' ) : __( 'Email', 'conditional-email-router-for-elementor' );
 
 		$widget->add_control(
-			'eer_conditional_heading' . $suffix,
+			'ceer_conditional_heading' . $suffix,
 			array(
-				'label'     => __( 'Conditional Email Routing', 'elementor-email-router' ),
+				'label'     => __( 'Conditional Email Routing', 'conditional-email-router-for-elementor' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
 				'separator' => 'before',
 			)
@@ -80,10 +71,11 @@ final class EER_Native_Router {
 		$widget->add_control(
 			$enable_id,
 			array(
-				'label'        => sprintf( __( 'Enable routing for %s', 'elementor-email-router' ), $email_label ),
+				/* translators: %s: Elementor email action name. */
+				'label'        => sprintf( __( 'Enable routing for %s', 'conditional-email-router-for-elementor' ), $email_label ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Yes', 'elementor-email-router' ),
-				'label_off'    => __( 'No', 'elementor-email-router' ),
+				'label_on'     => __( 'Yes', 'conditional-email-router-for-elementor' ),
+				'label_off'    => __( 'No', 'conditional-email-router-for-elementor' ),
 				'return_value' => 'yes',
 				'default'      => '',
 				'render_type'  => 'none',
@@ -91,10 +83,10 @@ final class EER_Native_Router {
 		);
 
 		$widget->add_control(
-			'eer_conditional_help' . $suffix,
+			'ceer_conditional_help' . $suffix,
 			array(
 				'type'      => \Elementor\Controls_Manager::RAW_HTML,
-				'raw'       => __( 'Add one or more email variants. The first enabled condition that matches is used. Leave a variant email field blank to inherit the normal Email settings above. Field shortcodes such as <code>[field id="email"]</code> are supported.', 'elementor-email-router' ),
+				'raw'       => wp_kses_post( __( 'Add one or more email variants. The first enabled condition that matches is used. Leave a variant email field blank to inherit the normal Email settings above. Field shortcodes such as <code>[field id="email"]</code> are supported.', 'conditional-email-router-for-elementor' ) ),
 				'condition' => array( $enable_id => 'yes' ),
 			)
 		);
@@ -104,10 +96,10 @@ final class EER_Native_Router {
 		$repeater->add_control(
 			'enabled',
 			array(
-				'label'        => __( 'Enabled', 'elementor-email-router' ),
+				'label'        => __( 'Enabled', 'conditional-email-router-for-elementor' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Yes', 'elementor-email-router' ),
-				'label_off'    => __( 'No', 'elementor-email-router' ),
+				'label_on'     => __( 'Yes', 'conditional-email-router-for-elementor' ),
+				'label_off'    => __( 'No', 'conditional-email-router-for-elementor' ),
 				'return_value' => 'yes',
 				'default'      => 'yes',
 			)
@@ -116,17 +108,17 @@ final class EER_Native_Router {
 		$repeater->add_control(
 			'route_label',
 			array(
-				'label'       => __( 'Variant label', 'elementor-email-router' ),
+				'label'       => __( 'Variant label', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'label_block' => true,
-				'placeholder' => __( 'e.g. Complaint notification', 'elementor-email-router' ),
+				'placeholder' => __( 'e.g. Complaint notification', 'conditional-email-router-for-elementor' ),
 			)
 		);
 
 		$repeater->add_control(
 			'condition_heading',
 			array(
-				'label'     => __( 'Condition', 'elementor-email-router' ),
+				'label'     => __( 'Condition', 'conditional-email-router-for-elementor' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
 				'separator' => 'before',
 			)
@@ -135,29 +127,29 @@ final class EER_Native_Router {
 		$repeater->add_control(
 			'field_id',
 			array(
-				'label'       => __( 'Form field ID', 'elementor-email-router' ),
+				'label'       => __( 'Form field ID', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'label_block' => true,
 				'placeholder' => 'field_bef6e91',
-				'description' => __( 'Enter the Elementor field ID without form_fields[] or form-field-.', 'elementor-email-router' ),
+				'description' => __( 'Enter the Elementor field ID without form_fields[] or form-field-.', 'conditional-email-router-for-elementor' ),
 			)
 		);
 
 		$repeater->add_control(
 			'operator',
 			array(
-				'label'   => __( 'Operator', 'elementor-email-router' ),
+				'label'   => __( 'Operator', 'conditional-email-router-for-elementor' ),
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'default' => 'equals',
 				'options' => array(
-					'equals'       => __( 'Equals', 'elementor-email-router' ),
-					'not_equals'   => __( 'Does not equal', 'elementor-email-router' ),
-					'contains'     => __( 'Contains', 'elementor-email-router' ),
-					'not_contains' => __( 'Does not contain', 'elementor-email-router' ),
-					'starts_with'  => __( 'Starts with', 'elementor-email-router' ),
-					'ends_with'    => __( 'Ends with', 'elementor-email-router' ),
-					'empty'        => __( 'Is empty', 'elementor-email-router' ),
-					'not_empty'    => __( 'Is not empty', 'elementor-email-router' ),
+					'equals'       => __( 'Equals', 'conditional-email-router-for-elementor' ),
+					'not_equals'   => __( 'Does not equal', 'conditional-email-router-for-elementor' ),
+					'contains'     => __( 'Contains', 'conditional-email-router-for-elementor' ),
+					'not_contains' => __( 'Does not contain', 'conditional-email-router-for-elementor' ),
+					'starts_with'  => __( 'Starts with', 'conditional-email-router-for-elementor' ),
+					'ends_with'    => __( 'Ends with', 'conditional-email-router-for-elementor' ),
+					'empty'        => __( 'Is empty', 'conditional-email-router-for-elementor' ),
+					'not_empty'    => __( 'Is not empty', 'conditional-email-router-for-elementor' ),
 				),
 			)
 		);
@@ -165,20 +157,20 @@ final class EER_Native_Router {
 		$repeater->add_control(
 			'match_value',
 			array(
-				'label'       => __( 'Value', 'elementor-email-router' ),
+				'label'       => __( 'Value', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'label_block' => true,
-				'description' => __( 'Ignored for the Is empty and Is not empty operators.', 'elementor-email-router' ),
+				'description' => __( 'Ignored for the Is empty and Is not empty operators.', 'conditional-email-router-for-elementor' ),
 			)
 		);
 
 		$repeater->add_control(
 			'case_sensitive',
 			array(
-				'label'        => __( 'Case-sensitive match', 'elementor-email-router' ),
+				'label'        => __( 'Case-sensitive match', 'conditional-email-router-for-elementor' ),
 				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Yes', 'elementor-email-router' ),
-				'label_off'    => __( 'No', 'elementor-email-router' ),
+				'label_on'     => __( 'Yes', 'conditional-email-router-for-elementor' ),
+				'label_off'    => __( 'No', 'conditional-email-router-for-elementor' ),
 				'return_value' => 'yes',
 				'default'      => '',
 			)
@@ -187,19 +179,19 @@ final class EER_Native_Router {
 		$repeater->add_control(
 			'email_heading',
 			array(
-				'label'     => __( 'Email variant', 'elementor-email-router' ),
+				'label'     => __( 'Email variant', 'conditional-email-router-for-elementor' ),
 				'type'      => \Elementor\Controls_Manager::HEADING,
 				'separator' => 'before',
 			)
 		);
 
-		self::add_repeater_text_control( $repeater, 'email_to', __( 'To', 'elementor-email-router' ), '[field id="email"]' );
-		self::add_repeater_text_control( $repeater, 'email_subject', __( 'Subject', 'elementor-email-router' ), __( 'Inherit the normal email subject', 'elementor-email-router' ) );
+		self::add_repeater_text_control( $repeater, 'email_to', __( 'To', 'conditional-email-router-for-elementor' ), '[field id="email"]' );
+		self::add_repeater_text_control( $repeater, 'email_subject', __( 'Subject', 'conditional-email-router-for-elementor' ), __( 'Inherit the normal email subject', 'conditional-email-router-for-elementor' ) );
 
 		$repeater->add_control(
 			'email_content',
 			array(
-				'label'       => __( 'Message', 'elementor-email-router' ),
+				'label'       => __( 'Message', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::TEXTAREA,
 				'rows'        => 10,
 				'label_block' => true,
@@ -207,35 +199,40 @@ final class EER_Native_Router {
 			)
 		);
 
-		self::add_repeater_text_control( $repeater, 'email_from', __( 'From Email', 'elementor-email-router' ), self::DEFAULT_FROM );
-		self::add_repeater_text_control( $repeater, 'email_from_name', __( 'From Name', 'elementor-email-router' ), __( 'Inherit the normal From Name', 'elementor-email-router' ) );
+		self::add_repeater_text_control(
+			$repeater,
+			'email_from',
+			__( 'From Email', 'conditional-email-router-for-elementor' ),
+			__( 'Inherit the normal From Email', 'conditional-email-router-for-elementor' )
+		);
+		self::add_repeater_text_control( $repeater, 'email_from_name', __( 'From Name', 'conditional-email-router-for-elementor' ), __( 'Inherit the normal From Name', 'conditional-email-router-for-elementor' ) );
 
 		$repeater->add_control(
 			'email_reply_to',
 			array(
-				'label'       => __( 'Reply-To', 'elementor-email-router' ),
+				'label'       => __( 'Reply-To', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'label_block' => true,
 				'placeholder' => '_2' === $suffix ? '[field id="email"]' : 'email',
 				'description' => '_2' === $suffix
-					? __( 'Enter an email address or a field shortcode.', 'elementor-email-router' )
-					: __( 'Enter the ID of an email form field.', 'elementor-email-router' ),
+					? __( 'Enter an email address or a field shortcode.', 'conditional-email-router-for-elementor' )
+					: __( 'Enter the ID of an email form field.', 'conditional-email-router-for-elementor' ),
 			)
 		);
 
-		self::add_repeater_text_control( $repeater, 'email_to_cc', __( 'Cc', 'elementor-email-router' ) );
-		self::add_repeater_text_control( $repeater, 'email_to_bcc', __( 'Bcc', 'elementor-email-router' ) );
+		self::add_repeater_text_control( $repeater, 'email_to_cc', __( 'Cc', 'conditional-email-router-for-elementor' ) );
+		self::add_repeater_text_control( $repeater, 'email_to_bcc', __( 'Bcc', 'conditional-email-router-for-elementor' ) );
 
 		$repeater->add_control(
 			'email_content_type',
 			array(
-				'label'   => __( 'Send As', 'elementor-email-router' ),
+				'label'   => __( 'Send As', 'conditional-email-router-for-elementor' ),
 				'type'    => \Elementor\Controls_Manager::SELECT,
 				'default' => 'inherit',
 				'options' => array(
-					'inherit' => __( 'Inherit normal setting', 'elementor-email-router' ),
-					'html'    => __( 'HTML', 'elementor-email-router' ),
-					'plain'   => __( 'Plain', 'elementor-email-router' ),
+					'inherit' => __( 'Inherit normal setting', 'conditional-email-router-for-elementor' ),
+					'html'    => __( 'HTML', 'conditional-email-router-for-elementor' ),
+					'plain'   => __( 'Plain', 'conditional-email-router-for-elementor' ),
 				),
 			)
 		);
@@ -243,12 +240,12 @@ final class EER_Native_Router {
 		$widget->add_control(
 			$routes_id,
 			array(
-				'label'         => __( 'Conditional email variants', 'elementor-email-router' ),
+				'label'         => __( 'Conditional email variants', 'conditional-email-router-for-elementor' ),
 				'type'          => \Elementor\Controls_Manager::REPEATER,
 				'fields'        => $repeater->get_controls(),
 				'title_field'   => '{{{ route_label }}}',
 				'prevent_empty' => false,
-				'button_text'   => __( 'Add conditional email', 'elementor-email-router' ),
+				'button_text'   => __( 'Add conditional email', 'conditional-email-router-for-elementor' ),
 				'condition'     => array( $enable_id => 'yes' ),
 				'render_type'   => 'none',
 			)
@@ -257,12 +254,14 @@ final class EER_Native_Router {
 		$widget->add_control(
 			$no_match_id,
 			array(
-				'label'       => __( 'When no condition matches', 'elementor-email-router' ),
+				'label'       => __( 'When no condition matches', 'conditional-email-router-for-elementor' ),
 				'type'        => \Elementor\Controls_Manager::SELECT,
 				'default'     => 'default',
 				'options'     => array(
-					'default' => sprintf( __( 'Send the normal %s', 'elementor-email-router' ), $email_label ),
-					'skip'    => sprintf( __( 'Do not send %s', 'elementor-email-router' ), $email_label ),
+					/* translators: %s: Elementor email action name. */
+					'default' => sprintf( __( 'Send the normal %s', 'conditional-email-router-for-elementor' ), $email_label ),
+					/* translators: %s: Elementor email action name. */
+					'skip'    => sprintf( __( 'Do not send %s', 'conditional-email-router-for-elementor' ), $email_label ),
 				),
 				'condition'   => array( $enable_id => 'yes' ),
 				'render_type' => 'none',
@@ -315,12 +314,6 @@ final class EER_Native_Router {
 		foreach ( self::email_actions() as $action ) {
 			if ( ! self::is_enabled_for_action( $settings, $action['name'] ) ) {
 				continue;
-			}
-
-			$from_key = 'email_from' . $action['suffix'];
-
-			if ( empty( $settings[ $from_key ] ) ) {
-				$settings[ $from_key ] = self::DEFAULT_FROM;
 			}
 
 			$routes  = $settings[ self::ROUTES_CONTROL . $action['suffix'] ] ?? array();

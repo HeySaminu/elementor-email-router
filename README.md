@@ -1,37 +1,28 @@
-# Elementor Email Router
+# Conditional Email Router for Elementor
 
-Adds conditional email variants directly to Elementor Pro Form widgets.
+Conditional Email Router for Elementor adds conditional variants directly to the **Email** and **Email 2** actions in Elementor Pro Form widgets.
+
+## Requirements
+
+- WordPress 6.5 or later
+- PHP 7.4 or later
+- Elementor
+- Elementor Pro with the Form widget
+
+Elementor Pro is a commercial dependency and is not bundled with this plugin. This project is an independent add-on and is not affiliated with or endorsed by Elementor Ltd.
 
 ## Configure a form
 
-1. Open the Form widget in Elementor.
+1. Open a Form widget in Elementor.
 2. Add **Email** and/or **Email 2** under **Actions After Submit**.
-3. Open the corresponding Email settings section.
+3. Open the corresponding email settings section.
 4. Enable **Conditional Email Routing**.
-5. Add conditional email variants in priority order. The first enabled match wins.
+5. Add conditional variants in priority order. The first enabled match wins.
 6. Choose whether Elementor should send the normal email or skip that email action when no condition matches.
 
-Each variant can override:
+Each variant can override the recipient, subject, message, sender, reply-to, carbon-copy recipients and content type. Blank settings inherit the normal Elementor email configuration. Elementor field shortcodes such as `[field id="email"]` and `[all-fields]` are supported.
 
-- To
-- Subject
-- Message
-- From Email
-- From Name
-- Reply-To
-- Cc
-- Bcc
-- Send As
-
-Blank variant email fields inherit the normal Email or Email 2 setting. This includes Subject, From Name, and From Email. The default From Email for routed forms is `web@sterling.ng`. Elementor field shortcodes such as `[field id="email"]` and `[all-fields]` are supported.
-
-For the primary Email action, Reply-To should be the ID of an email form field, such as `email`. Email 2 also accepts an email address or field shortcode.
-
-## Conditions
-
-Enter an Elementor field ID such as `request_type`. The plugin also accepts `form-field-request_type` and `form_fields[request_type]` and normalizes them automatically.
-
-Available operators:
+## Matching operators
 
 - Equals
 - Does not equal
@@ -42,8 +33,16 @@ Available operators:
 - Is empty
 - Is not empty
 
-Matching is case-insensitive by default. It can be made case-sensitive per variant.
+Matching is case-insensitive by default and can be made case-sensitive per variant.
 
-## Security
+## Privacy and security
 
-The plugin does not expose its own public endpoint or read submitted request variables directly. Elementor continues to handle form authorization, validation, shortcode replacement, and email delivery. Routed header values are validated, line breaks and control characters are removed, and malformed route settings are ignored.
+The plugin does not create a public endpoint, contact an external service or collect analytics. Elementor continues to handle form validation, shortcode replacement and email delivery. Routed mail headers are validated, control characters are removed and malformed route settings are ignored.
+
+## Development
+
+Development takes place at <https://github.com/HeySaminu/elementor-email-router>.
+
+## Licence
+
+GPL-2.0-or-later.
